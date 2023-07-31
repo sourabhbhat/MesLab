@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dijkstra's Algorithm</title>
+  <title>MES Lab</title>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
@@ -173,6 +173,66 @@
                                 ; TO STORE THE RESULT IN THE GIVEN ADDRESS
                                 RESULT  DCD 0X0
                                         END
+
+
+      
+              AREA ASCENDING, CODE, READONLY
+
+; Entry Point - Mark first instruction to execute
+        ENTRY
+START
+        MOV R8, #4      ; Initialize counter to 4 (i.e., N=4)
+        LDR R2, =CVALUE ; Address of CODE REGION
+        LDR R3, =DVALUE ; Address of DATA REGION
+
+LOOP0
+        LDR R1, [R2], #4 ; Load values from CODE REGION
+        STR R1, [R3], #4 ; Store values to DATA REGION
+        SUBS R8, R8, #1  ; Decrement counter
+        CMP R8, #0       ; Compare counter to 0
+        BNE LOOP0        ; Loop back till array ends
+
+START1
+        MOV R5, #3      ; Initialize counter to 3 (i.e., N=4)
+        MOV R7, #0      ; Flag to denote exchange has occurred
+        LDR R1, =DVALUE ; Load the address of the first value
+
+LOOP
+        LDR R2, [R1], #4 ; Word align to array element
+        LDR R3, [R1]     ; Load second number
+        CMP R2, R3       ; Compare numbers
+        BLT LOOP2        ; If the first number is < then goto LOOP2
+        STR R2, [R1], #-4 ; Interchange number R2 & R3
+        STR R3, [R1]     ; Interchange number R2 & R3
+        MOV R7, #1       ; Flag denoting exchange has taken place
+        ADD R1, #4       ; Restore the pointer
+
+LOOP2
+        SUBS R5, R5, #1  ; Decrement counter
+        CMP R5, #0       ; Compare counter to 0
+        BNE LOOP         ; Loop back till array ends
+
+        CMP R7, #0       ; Comparing flag
+        BNE START1       ; If flag is not zero, then go to START1 loop
+
+BACK    B BACK          ; Infinite loop
+
+        NOP
+        NOP
+
+; ARRAY OF 32-BIT NUMBERS (N=4) IN CODE REGION
+CVALUE
+        DCD 0X44444444
+        DCD 0X11111111
+        DCD 0X33333333
+        DCD 0X22222222
+
+        AREA DATA1, DATA, READWRITE
+; ARRAY OF 32-BIT NUMBERS IN DATA REGION
+DVALUE
+        DCD 0X00000000
+        END
+
                                 
                                                 
     </code>
