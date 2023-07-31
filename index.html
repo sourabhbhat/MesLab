@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dijkstra's Algorithm</title>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function(registration) {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch(function(error) {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
+  </script>
+</head>
+<body>
+  <pre>
+    <code>
+        AREA SQUARE, CODE, READONLY
+
+        ; Entry Point - Mark first instruction to execute
+                ENTRY
+        START
+                LDR R0, =TABLE1     ; Load the start address of the Lookup table
+                MOV R1, #0x03       ; Load the number whose square is to be found
+                MOV R1, R1, LSL #0x2 ; Generate the address corresponding to the square of the given number
+                ADD R0, R0, R1       ; Load the address of the element in the Lookup table
+                LDR R3, [R0]         ; Get the square of the given number in R3
+        
+        BACK    B BACK               ; Infinite loop
+        
+                NOP
+                NOP
+        
+        ; Lookup table contains squares of numbers from 0 to 10 (in hex)
+        No      DCD 0x02
+        
+        TABLE1  DCD 0x00000000 ; SQUARE OF 0 = 0
+                DCD 0x00000001 ; SQUARE OF 1 = 1
+                DCD 0x00000004 ; SQUARE OF 2 = 4
+                DCD 0x00000009 ; SQUARE OF 3 = 9
+                DCD 0x00000010 ; SQUARE OF 4 = 16
+                DCD 0x00000019 ; SQUARE OF 5 = 25
+                DCD 0x00000024 ; SQUARE OF 6 = 36
+                DCD 0x00000031 ; SQUARE OF 7 = 49
+                DCD 0x00000040 ; SQUARE OF 8 = 64
+                DCD 0x00000051 ; SQUARE OF 9 = 81
+                DCD 0x00000064 ; SQUARE OF 10 = 100
+        
+                END
+
+                
+
+                AREA ONEZERO, CODE, READONLY
+
+                ; Entry Point - Mark first instruction to execute
+                        ENTRY
+                START
+                        MOV R2, #0          ; Counter for ones
+                        MOV R3, #0          ; Counter for zeros
+                        MOV R7, #1          ; Counter to get two words
+                        LDR R6, =VALUE      ; Load the address of VALUE
+                
+                LOOP
+                        MOV R1, #32         ; 32 bits counter
+                
+                LOOP0
+                        MOVS R0, R0, ROR #1 ; Right shift to check carry bit (1's/0's)
+                        BHI ONES            ; If carry bit is 1, go to ONES branch; otherwise, go to NEXT
+                
+                ZEROS
+                        ADD R3, R3, #1      ; If carry bit is 0, then increment the counter by 1 (R3)
+                        B LOOP1             ; Branch to LOOP1
+                
+                ONES
+                        ADD R2, R2, #1      ; If carry bit is 1, then increment the counter by 1 (R2)
+                
+                LOOP1
+                        SUBS R1, R1, #1      ; Counter value decremented by 1
+                        BNE LOOP0            ; If not equal, go back to LOOP0 to check the next bit
+                
+                        SUBS R7, R7, #1      ; Counter value decremented by 1
+                        CMP R7, #0           ; Compare counter R7 to 0
+                        BNE LOOP             ; If not equal, go back to LOOP to process the second word
+                
+                BACK    B BACK               ; Infinite loop
+                
+                        NOP
+                        NOP
+                
+                VALUE   DCD 0X11111111, 0XAA55AA55 ; Two values in an array
+                
+                        END
+
+
+
+                        
+                        AREA LARGEST, CODE, READONLY
+
+                        ; Entry Point - Mark first instruction to execute
+                                ENTRY
+                        START
+                                MOV R5, #6          ; Initialize counter to 6 (i.e., N=7)
+                                LDR R1, =VALUE1     ; Load the address of the first value into R1
+                                LDR R2, [R1], #4    ; Word align to array element
+                        
+                        LOOP
+                                LDR R4, [R1], #4    ; Word align to array element
+                                CMP R2, R4          ; Compare the numbers
+                        
+                                BHI LOOP1           ; If the first number is greater, go to LOOP1
+                                MOV R2, R4          ; If the first number is smaller, move content of R4 to R2
+                        
+                        LOOP1
+                                SUBS R5, R5, #1     ; Decrement counter
+                                CMP R5, #0          ; Compare counter to 0
+                                BNE LOOP            ; Loop back until array ends
+                        
+                                LDR R4, =RESULT     ; Load the address of the RESULT variable
+                                STR R2, [R4]        ; Store the result (largest value) in the memory location pointed by R4
+                        
+                        BACK    B BACK              ; Infinite loop
+                        
+                                NOP
+                                NOP
+                        
+                        ; ARRAY OF 32-BIT NUMBERS (N=7)
+                        VALUE1
+                                DCD 0X44444444
+                                DCD 0X22222222
+                                DCD 0X11111111
+                                DCD 0X33333333
+                                DCD 0XAAAAAAAA
+                                DCD 0X88888888
+                                DCD 0X99999999
+                        
+                        ; TO STORE THE RESULT IN THE GIVEN ADDRESS
+                                AREA DATA2, DATA, READWRITE
+                        RESULT  DCD 0X0
+                                END
+
+
+                        
+                                
+                                AREA ADDITION, CODE, READONLY
+
+                                ; Entry Point - Mark first instruction to execute
+                                        ENTRY
+                                START
+                                        MOV R5, #6      ; Initialize counter to 6 (i.e., N=6)
+                                        MOV R0, #0      ; Initialize sum to zero
+                                        LDR R1, =VALUE1 ; Load the address of first value
+                                
+                                LOOP
+                                        LDRH R3, [R1], #2 ; Read 16-bit data from memory pointed by R1
+                                        ADD R0, R0, R3    ; Add R3 to R0 (sum)
+                                
+                                        SUBS R5, R5, #1   ; Decrement counter
+                                        CMP R5, #0        ; Compare counter to 0
+                                        BNE LOOP          ; Loop back till array ends
+                                
+                                        LDR R4, =RESULT   ; Load the address of the RESULT variable
+                                        STR R0, [R4]      ; Store the result (sum) in the memory location pointed by R4
+                                
+                                JMP     B JMP            ; Unconditional jump (infinite loop)
+                                
+                                VALUE1  DCW 0X1111, 0X2222, 0X3333, 0XAAAA, 0XBBBB, 0XCCCC
+                                
+                                ; ARRAY OF 16-BIT NUMBERS (N=6)
+                                        AREA DATA2, DATA, READWRITE
+                                
+                                ; TO STORE THE RESULT IN THE GIVEN ADDRESS
+                                RESULT  DCD 0X0
+                                        END
+                                
+                                                
+    </code>
+  </pre>
+</body>
+</html>
